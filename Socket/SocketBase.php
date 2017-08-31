@@ -97,27 +97,27 @@ abstract class SocketBase {
 	 * @param string $message
 	 * @return boolean
 	 */
-	protected function send($message) {
+	protected function send($socket,$message) {
 		try {
-			if (empty ( $message )) {
+			if (empty( $message )) {
 				return false;
 			}
 			$result = true;
 			if ($this->connected == false) {
 				$result = $this->connect ();
 			}
-			$msg = $this->encrypt ( $message );
+			$msg = $this->encrypt( $message );
 			$msg = "$msg\n\0";
-			$length = strlen ( $msg );
+			$length = strlen( $msg );
 			while ( $this->connected ) {
-				$sent = socket_write ( $this->socket, $msg, $length );
+				$sent = socket_write( $socket, $msg, $length );
 				if ($sent === false) {
 					break;
 				}
 				if ($sent < $length) {
-					$msg = substr ( $msg, $sent );
+					$msg = substr( $msg, $sent );
 					$length -= $sent;
-					print ("Message truncated: Resending: $msg") ;
+					print("Message truncated: Resending: $msg") ;
 				} else {
 					return true;
 				}
@@ -125,7 +125,7 @@ abstract class SocketBase {
 			return false;
 		} catch ( Exception $e ) {
 			$this->errcode = $e->getCode ();
-			$this->errmsg = $e->getMessage ();
+			$this->errmsg  = $e->getMessage ();
 			return false;
 		}
 	}
@@ -135,25 +135,25 @@ abstract class SocketBase {
 	 * 
 	 * @return boolean
 	 */
-	protected function receive($length = 0) {
+	protected function receive($socket,$length = 0) {
 		try {
 			$data = '';
 			switch ($this->dataType) {
 				// 读取普通字符型数据
 				case self::SOCKET_DATA_NORMAL :
-					$data = $this->read ( $length );
+					$data = $this->read($socket, $length );
 					break;
 				// 读取二进制数据
 				case self::SOCKET_DATA_BINARY :
-					$data = $this->recv ( $length );
+					$data = $this->recv($socket, $length );
 					break;
 				default :
 					break;
 			}
 			return $data;
 		} catch ( Exception $e ) {
-			$this->errcode = $e->getCode ();
-			$this->errmsg = $e->getMessage ();
+			$this->errcode = $e->getCode();
+			$this->errmsg  = $e->getMessage();
 			return false;
 		}
 	}
@@ -162,17 +162,17 @@ abstract class SocketBase {
 	 * @param number $length
 	 * @return Ambigous <string, string>|boolean
 	 */
-	private function read($length) {
+	private function read($socket,$length = 0) {
 		try {
 			$recvData = $data = [ ];
 			do {
 				$maxSize = $length == 0 ? 2048 : $length;
-				$buf = socket_read ( $this->socket, $maxSize );
+				$buf = socket_read ( $socket, $maxSize );
 				if (! empty ( $buf )) {
 					$recvData [] = $buf;
 				} elseif ($buf === false) {
 					$this->errcode = socket_last_error ();
-					$this->errmsg = socket_strerror ( $this->errcode );
+					$this->errmsg  = socket_strerror ( $this->errcode );
 					return false;
 				} else {
 					$data = implode ( '', $recvData );
@@ -183,8 +183,8 @@ abstract class SocketBase {
 			$data = $this->decrypt ( $data );
 			return $data;
 		} catch ( Exception $e ) {
-			$this->errcode = $e->getCode ();
-			$this->errmsg = $e->getMessage ();
+			$this->errcode = $e->getCode();
+			$this->errmsg  = $e->getMessage();
 			return false;
 		}
 	}
@@ -193,17 +193,17 @@ abstract class SocketBase {
 	 * @param number $length
 	 * @return Ambigous <string, string>|boolean
 	 */
-	private function recv($length){
+	private function recv($socket,$length = 0){
 		try {
 			$recvData = [];
 			$data = '';
 			do {
 				$buf = '';
 				$maxSize = $length == 0 ? 2048 : $length;
-				$bytes = socket_recv($this->socket, $buf, $maxSize, MSG_PEEK|MSG_DONTWAIT);			
+				$bytes = socket_recv($socket, $buf, $maxSize, MSG_PEEK|MSG_DONTWAIT);			
 				if ($bytes === false) {
 					$this->errcode = socket_last_error();
-					$this->errmsg = socket_strerror( $this->errcode );
+					$this->errmsg  = socket_strerror( $this->errcode );
 					return false;
 				}elseif ($bytes > 0){
 					$recvData[] = $buf;
@@ -216,8 +216,8 @@ abstract class SocketBase {
 			$data = $this->decrypt ( $data );
 			return $data;
 		} catch ( Exception $e ) {
-			$this->errcode = $e->getCode ();
-			$this->errmsg = $e->getMessage ();
+			$this->errcode = $e->getCode();
+			$this->errmsg  = $e->getMessage();
 			return false;
 		}
 	}

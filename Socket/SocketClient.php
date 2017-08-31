@@ -31,13 +31,13 @@ class SocketClient extends \SocketBase {
 		try {
 			$this->connected = socket_connect($this->socket, $this->address,$this->port);
 			if ($this->connected === false) {
-				$this->errcode = socket_last_error ();
-				$this->errmsg = socket_strerror ( $this->errcode );
+				$this->errcode = socket_last_error();
+				$this->errmsg  = socket_strerror( $this->errcode );
 			}
 			return $this->connected ? true : false;
 		} catch ( Exception $e ) {
-			$this->errcode = $e->getCode ();
-			$this->errmsg = $e->getMessage ();
+			$this->errcode = $e->getCode();
+			$this->errmsg  = $e->getMessage();
 			return false;
 		}
 	}
@@ -56,12 +56,12 @@ class SocketClient extends \SocketBase {
 				$result = $this->connect();
 			}
 			if ($result) {
-				$result = parent::send( $message );
+				$result = parent::send($this->socket, $message );
 			}
 			return $result;
 		} catch( Exception $e ) {
-			$this->errcode = $e->getCode ();
-			$this->errmsg = $e->getMessage ();
+			$this->errcode = $e->getCode();
+			$this->errmsg  = $e->getMessage();
 			return false;
 		}
 	}
@@ -81,8 +81,8 @@ class SocketClient extends \SocketBase {
 			}
 			return $recv;
 		} catch (Exception $e) {
-			$this->errcode = $e->getCode ();
-			$this->errmsg = $e->getMessage ();
+			$this->errcode = $e->getCode();
+			$this->errmsg  = $e->getMessage();
 			return false;
 		}
 	}
