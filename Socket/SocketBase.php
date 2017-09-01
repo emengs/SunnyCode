@@ -63,6 +63,7 @@ abstract class SocketBase {
 			$socket = @socket_create ( $this->domain, $this->tranType, $this->protocol );
 			if ($socket) {
 				$this->socket = $socket;
+				echo "success create the socket handle: $socket",PHP_EOL;
 				return true;
 			}else{
 				$this->errcode = socket_last_error($socket);
@@ -102,22 +103,20 @@ abstract class SocketBase {
 			if (empty( $message )) {
 				return false;
 			}
-			$result = true;
-			if ($this->connected == false) {
-				$result = $this->connect ();
-			}
+
 			$msg = $this->encrypt( $message );
 			$msg = "$msg\n\0";
 			$length = strlen( $msg );
-			while ( $this->connected ) {
-				$sent = socket_write( $socket, $msg, $length );
+			while ( $socket ) {
+				$sent = @socket_write( $socket, $msg, $length );
 				if ($sent === false) {
 					break;
 				}
+				echo "[115] message send process : $sent,$length !",PHP_EOL;
 				if ($sent < $length) {
 					$msg = substr( $msg, $sent );
 					$length -= $sent;
-					print("Message truncated: Resending: $msg") ;
+					print_r("Message truncated: Resending: $msg") ;
 				} else {
 					return true;
 				}
@@ -126,6 +125,7 @@ abstract class SocketBase {
 		} catch ( Exception $e ) {
 			$this->errcode = $e->getCode ();
 			$this->errmsg  = $e->getMessage ();
+			echo 'File: '.$e->getFile(),' line: '.$e->getLine(),' error: ', $e->getMessage(),PHP_EOL;
 			return false;
 		}
 	}
@@ -137,7 +137,7 @@ abstract class SocketBase {
 	 */
 	protected function receive($socket,$length = 0) {
 		try {
-			$data = '';
+			$data = false;
 			switch ($this->dataType) {
 				// 读取普通字符型数据
 				case self::SOCKET_DATA_NORMAL :
@@ -154,6 +154,7 @@ abstract class SocketBase {
 		} catch ( Exception $e ) {
 			$this->errcode = $e->getCode();
 			$this->errmsg  = $e->getMessage();
+			echo 'File: '.$e->getFile(),' line: '.$e->getLine(),' error: ', $e->getMessage(),PHP_EOL;
 			return false;
 		}
 	}
@@ -167,24 +168,28 @@ abstract class SocketBase {
 			$recvData = $data = [ ];
 			do {
 				$maxSize = $length == 0 ? 2048 : $length;
-				$buf = socket_read ( $socket, $maxSize );
-				if (! empty ( $buf )) {
+				$buf = @socket_read ( $socket, $maxSize,$this->dataType );
+				var_dump($buf);
+				echo '[176]['.__FILE__.'] recv the message :'.trim($buf).PHP_EOL;
+				if (!empty(trim($buf))) {
 					$recvData [] = $buf;
-				} elseif ($buf === false) {
+					echo '[176]['.__FILE__.'] the recv data:'.$buf,PHP_EOL;
+				}elseif ($buf === false){
 					$this->errcode = socket_last_error ();
-					$this->errmsg  = socket_strerror ( $this->errcode );
+					$this->errmsg = socket_strerror ( $this->errcode );
 					return false;
 				} else {
-					$data = implode ( '', $recvData );
+					$data = implode( '', $recvData );
 					break;
-				}
-			} while ( true );
-			
+				} 
+			} while ( true );		
 			$data = $this->decrypt ( $data );
+			echo "[186][".__FILE__."]-------------------------------------\n$data",PHP_EOL;
 			return $data;
 		} catch ( Exception $e ) {
 			$this->errcode = $e->getCode();
 			$this->errmsg  = $e->getMessage();
+			echo 'File: '.$e->getFile(),' line: '.$e->getLine(),' error: ', $e->getMessage(),PHP_EOL;
 			return false;
 		}
 	}
@@ -200,7 +205,8 @@ abstract class SocketBase {
 			do {
 				$buf = '';
 				$maxSize = $length == 0 ? 2048 : $length;
-				$bytes = socket_recv($socket, $buf, $maxSize, MSG_PEEK|MSG_DONTWAIT);			
+				$bytes = @socket_recv($socket, $buf, $maxSize, MSG_PEEK|MSG_DONTWAIT);	
+				echo '[211] recv the message :',$buf,PHP_EOL;
 				if ($bytes === false) {
 					$this->errcode = socket_last_error();
 					$this->errmsg  = socket_strerror( $this->errcode );
@@ -218,6 +224,7 @@ abstract class SocketBase {
 		} catch ( Exception $e ) {
 			$this->errcode = $e->getCode();
 			$this->errmsg  = $e->getMessage();
+			echo 'File: '.$e->getFile(),' line: '.$e->getLine(),' error: ', $e->getMessage(),PHP_EOL;
 			return false;
 		}
 	}

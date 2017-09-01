@@ -1,5 +1,5 @@
 <?php
-require_once ('Socket/SocketBase.php');
+require_once ('./SocketBase.php');
 
 /**
  * Socket Server
@@ -42,11 +42,13 @@ class SocketSever extends \SocketBase {
 					$this->errcode = socket_last_error();
 					$this->errmsg = socket_strerror( $this->errcode );
 				}
+				echo "success bind the socket result:$result, Ip:$this->address , port:$this->port",PHP_EOL;
 			}	
 			return $result ? true : false;
 		} catch ( Exception $e ) {
 			$this->errcode = $e->getCode();
 			$this->errmsg = $e->getMessage();
+			echo 'File: '.$e->getFile(),' line: '.$e->getLine(),' error: ', $e->getMessage(),PHP_EOL;
 			return false;
 		}
 	}
@@ -61,11 +63,13 @@ class SocketSever extends \SocketBase {
 			if ($result === false) {
 				$this->errcode = socket_last_error();
 				$this->errmsg = socket_strerror( $this->errcode );
-			}		
+			}
+			echo "success listen the socket result:$result",PHP_EOL;
 			return $result ? true : false;
 		} catch ( Exception $e ) {
 			$this->errcode = $e->getCode();
 			$this->errmsg = $e->getMessage();
+			echo 'File: '.$e->getFile(),' line: '.$e->getLine(),' error: ', $e->getMessage(),PHP_EOL;
 			return false;
 		}
 	}
@@ -76,37 +80,44 @@ class SocketSever extends \SocketBase {
 	protected function accept() {
 		socket_set_nonblock( $this->socket );
 		$clients = array($this->socket);
-		do {
-			$read = $clients;
-			if (socket_select( $read, $write = NULL, $except = NULL, 0 ) < 1)
-				continue;
-			if (in_array( $this->socket, $read )) {
-				$client = socket_accept( $this->socket );
-				if ($client > 0) {
-					self::$clients [] = $clients [] = $client;
-					socket_write($client, "There are ".(count($clients) - 1)." client(s) connected to the server\n");					
-					socket_getpeername( $client, $ip );
-					echo "New client connected: {$ip}\n";
-					$key = array_search( $this->sock, $read );
-					unset( $read [$key] );
-				}
-			}
-			foreach ($read as $read_sock){
-				$data = $this->receive($read_sock);
-				if ($data === false) {
-					$key = array_search($read_sock, $clients);
-					unset($clients[$key]);
-					echo "client disconnected.\n";
+		try {
+			do {
+				$read = $clients;
+				if (@socket_select( $read, $write = NULL, $except = NULL, 0 ) < 1){
 					continue;
 				}
-				$data = trim($data);				 
-				if (!empty($data)) {			 
-					$this->send($read_sock,'good is receive the message!!');
-					echo $data;
+				if (in_array( $this->socket, $read )) {
+					$client = socket_accept( $this->socket );
+					if ($client > 0 && !in_array($client, $clients)) {
+						$clients[] = $client;
+						socket_write($client, "There are ".(count($clients) - 1)." client(s) connected to the server\r\n");
+						socket_getpeername( $client, $ip );
+						echo "New client connected: {$ip}\r\n";
+						$key = array_search( $this->socket, $read );
+						unset( $read [$key] );
+					}
 				}
-			}
-			print_r( self::$clients );
-		} while ( true );
+				foreach ($read as $read_sock){
+					$data = $this->receive($read_sock);
+					if ($data === false) {
+						$key = array_search($read_sock, $clients);
+						unset($clients[$key]);
+						echo "client disconnected.\r\n";
+						continue;
+					}elseif ($data == ''){
+						continue;
+					}else{		
+						$data = trim($data);
+						$this->send($read_sock,"accept the messe: $data!!\n");
+						echo '[113]'. $data,PHP_EOL;
+					}
+				}
+				//print_r( self::$clients );
+			} while ( true );
+		} catch (Exception $e) {
+			echo 'File: '.$e->getFile(),' line: '.$e->getLine(),' error: ', $e->getMessage(),PHP_EOL;
+			return false;
+		}
 	}
 	
 	/**
@@ -116,8 +127,7 @@ class SocketSever extends \SocketBase {
 		if (!isset(self::$instance)) {
 			self::$instance = new self($host,$port);
 		}
-		$result = self::$instance->createSocket();
-		$result = $result ? self::$instance->bind() : false;
+		$result = self::$instance->bind();
 		$result = $result ? self::$instance->listen() : false;
 		$result = $result ? self::$instance->accept() : false;
 		return $result ? true : false;
@@ -128,7 +138,7 @@ class SocketSever extends \SocketBase {
 	 * @see SocketBase::__destruct()
 	 */
 	function __destruct() {
-		parent::__destruct();
+		// parent::__destruct();
 	}
 }
 // 启动服务器
