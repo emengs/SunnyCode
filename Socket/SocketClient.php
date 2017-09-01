@@ -142,8 +142,10 @@ while (($input=fgets(STDIN)) != "") {
 			echo 'The server connect is get down!! '.PHP_EOL;
 			break;
 		}else{
-			echo '[142] The server message: ', $client->recvMessage(),PHP_EOL;
+			echo 'The message is send success !! '.PHP_EOL;
 		}
+
+		echo '[147][SocketClient] The server message: '. $client->recvMessage(),PHP_EOL;
 	}
 }
 
