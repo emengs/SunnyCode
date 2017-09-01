@@ -169,11 +169,11 @@ abstract class SocketBase {
 			do {
 				$maxSize = $length == 0 ? 2048 : $length;
 				$buf = @socket_read ( $socket, $maxSize,$this->dataType );
-				var_dump($buf);
-				echo '[176]['.__FILE__.'] recv the message :'.trim($buf).PHP_EOL;
+				var_dump(trim($buf));
+				echo '[173]['.__CLASS__.'] recv the message :'.trim($buf).PHP_EOL;
 				if (!empty(trim($buf))) {
 					$recvData [] = $buf;
-					echo '[176]['.__FILE__.'] the recv data:'.$buf,PHP_EOL;
+					echo '[176]['.__CLASS__.'] the recv data:'.$buf,PHP_EOL;
 				}elseif ($buf === false){
 					$this->errcode = socket_last_error ();
 					$this->errmsg = socket_strerror ( $this->errcode );
@@ -184,7 +184,7 @@ abstract class SocketBase {
 				} 
 			} while ( true );		
 			$data = $this->decrypt ( $data );
-			echo "[186][".__FILE__."]-------------------------------------\n$data",PHP_EOL;
+			echo "[186][".__CLASS__."]-------------------------------------\n$data",PHP_EOL;
 			return $data;
 		} catch ( Exception $e ) {
 			$this->errcode = $e->getCode();

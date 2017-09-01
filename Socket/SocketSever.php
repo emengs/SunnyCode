@@ -90,11 +90,12 @@ class SocketSever extends \SocketBase {
 					$client = socket_accept( $this->socket );
 					if ($client > 0 && !in_array($client, $clients)) {
 						$clients[] = $client;
-						socket_write($client, "There are ".(count($clients) - 1)." client(s) connected to the server\r\n");
+						echo ("There are ".(count($clients) - 1)." client(s) connected to the server\r\n");
 						socket_getpeername( $client, $ip );
 						echo "New client connected: {$ip}\r\n";
 						$key = array_search( $this->socket, $read );
 						unset( $read [$key] );
+						$this->send($client, "welcome to connect the PPP server !\r\n");
 					}
 				}
 				foreach ($read as $read_sock){
@@ -104,12 +105,12 @@ class SocketSever extends \SocketBase {
 						unset($clients[$key]);
 						echo "client disconnected.\r\n";
 						continue;
-					}elseif ($data == ''){
+					}elseif ($data == '' || $data == "\n"){
 						continue;
 					}else{		
 						$data = trim($data);
 						$this->send($read_sock,"accept the messe: $data!!\n");
-						echo '[113]'. $data,PHP_EOL;
+						echo '[113]['.__CLASS__.']'. $data,PHP_EOL;
 					}
 				}
 				//print_r( self::$clients );

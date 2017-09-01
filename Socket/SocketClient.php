@@ -122,7 +122,7 @@ $client = new SocketClient('127.0.0.1', '8080');
 echo 'Please input the want to send message !!'.PHP_EOL;
 $message = '';
 $end = "\r\n";
-echo $result = $client->recvMessage(),PHP_EOL;
+$result = $client->recvMessage();
 if ($result == false) {
 	return ;
 }
